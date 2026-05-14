@@ -21,6 +21,8 @@ const translationsController = require('../controllers/translationsController');
 const aiController = require('../controllers/aiController');
 const usersController = require('../controllers/usersController');
 const aiFeaturesController = require('../controllers/aiFeaturesController');
+const aiSuggestController = require('../controllers/aiSuggestController');
+const smartSuggestionsController = require('../controllers/smartSuggestionsController');
 
 // Auth routes
 router.post('/auth/register', authLimiter, authController.register);
@@ -37,11 +39,15 @@ router.put('/auth/profile', authenticateToken, authController.updateProfile);
 // Articles routes — bulk routes BEFORE :id routes
 router.post('/articles/bulk-delete', authenticateToken, articlesController.bulkDelete);
 router.put('/articles/bulk-update', authenticateToken, articlesController.bulkUpdate);
+// Full-text search endpoint (PostgreSQL tsvector/ts_rank) — must be before /:id
+router.get('/articles/search', optionalAuth, searchController.search);
 router.get('/articles', optionalAuth, articlesController.getAll);
 router.get('/articles/:id', optionalAuth, articlesController.getById);
 router.post('/articles', authenticateToken, articlesController.create);
 router.put('/articles/:id', authenticateToken, articlesController.update);
 router.delete('/articles/:id', authenticateToken, articlesController.remove);
+// Collaborative review workflow
+router.put('/articles/:id/submit-for-review', authenticateToken, articlesController.submitForReview);
 
 // Categories routes — bulk routes BEFORE :id routes
 router.post('/categories/bulk-delete', authenticateToken, authorize('admin', 'editor'), categoriesController.bulkDelete);
@@ -142,8 +148,20 @@ router.get('/users/:id', authenticateToken, usersController.getById);
 router.put('/users/:id', authenticateToken, usersController.update);
 router.delete('/users/:id', authenticateToken, authorize('admin'), usersController.remove);
 
+// Smart Suggestions routes — auto-generate BEFORE :id routes
+router.post('/smart-suggestions/auto-generate/:articleId', authenticateToken, aiLimiter, smartSuggestionsController.autoGenerate);
+router.get('/smart-suggestions', authenticateToken, smartSuggestionsController.getAll);
+router.get('/smart-suggestions/:id', authenticateToken, smartSuggestionsController.getById);
+router.post('/smart-suggestions', authenticateToken, smartSuggestionsController.create);
+router.put('/smart-suggestions/:id', authenticateToken, smartSuggestionsController.update);
+router.delete('/smart-suggestions/:id', authenticateToken, smartSuggestionsController.remove);
+
 // AI routes
 router.post('/ai/generate', authenticateToken, aiLimiter, aiController.generateContent);
+// Streaming wiki generation via SSE
+router.post('/ai/generate/stream', authenticateToken, aiLimiter, aiController.generateContentStream);
+// AI-powered article suggestions based on KB gap analysis
+router.post('/ai/suggest-articles', authenticateToken, aiLimiter, aiSuggestController.suggestArticles);
 router.post('/ai/summarize', authenticateToken, aiLimiter, aiController.summarize);
 router.post('/ai/answer', authenticateToken, aiLimiter, aiController.answerQuestion);
 router.post('/ai/translate', authenticateToken, aiLimiter, aiController.translate);
@@ -153,6 +171,8 @@ router.post('/ai/tags', authenticateToken, aiLimiter, aiController.generateTags)
 router.post('/ai/title', authenticateToken, aiLimiter, aiController.generateTitle);
 router.post('/ai/chat', authenticateToken, aiLimiter, aiController.chat);
 router.get('/ai/history', authenticateToken, aiController.getHistory);
+// Semantic duplicate detector
+router.post('/ai/duplicate-check', authenticateToken, aiLimiter, aiController.duplicateCheck);
 
 // AI Article Suggestions routes
 router.get('/ai/article-suggestions', authenticateToken, aiFeaturesController.getArticleSuggestions);

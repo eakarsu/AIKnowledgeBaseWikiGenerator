@@ -28,6 +28,8 @@ const Layout = () => {
       { path: '/search', icon: '🔍', label: 'Search' },
       { path: '/ai-features', icon: '✨', label: 'AI Features' },
       { path: '/ai-tools', icon: '🤖', label: 'AI Tools' },
+      { path: '/knowledge-graph', icon: '🕸️', label: 'Knowledge Graph' },
+      { path: '/smart-suggestions', icon: '💡', label: 'Smart Suggestions' },
       { path: '/features', icon: '🏆', label: 'Features' },
       { path: '/analytics', icon: '📈', label: 'Analytics' },
     ]},

@@ -12,6 +12,8 @@ const ArticleEditor = () => {
   const [tags, setTags] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [duplicateCheck, setDuplicateCheck] = useState(null);
+  const [checkingDuplicates, setCheckingDuplicates] = useState(false);
   const [article, setArticle] = useState({
     title: '',
     content: '',
@@ -145,6 +147,28 @@ const ArticleEditor = () => {
     }
   };
 
+  const handleCheckDuplicates = async () => {
+    if (!article.title) {
+      alert('Please enter a title first');
+      return;
+    }
+    setCheckingDuplicates(true);
+    setDuplicateCheck(null);
+    try {
+      const response = await api.post('/ai/duplicate-check', {
+        title: article.title,
+        summary: article.summary,
+        categoryId: article.category_id || undefined
+      });
+      setDuplicateCheck(response.data);
+    } catch (error) {
+      console.error('Duplicate check failed:', error);
+      alert('Failed to check for duplicates. Make sure your AI configuration is set up.');
+    } finally {
+      setCheckingDuplicates(false);
+    }
+  };
+
   const toggleTag = (tagId) => {
     const newTags = article.tags.includes(tagId)
       ? article.tags.filter(t => t !== tagId)
@@ -168,16 +192,80 @@ const ArticleEditor = () => {
       <form onSubmit={handleSubmit}>
         <div className="editor-container">
           <div className="form-group">
-            <label className="form-label">Title</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <label className="form-label" style={{ margin: 0 }}>Title</label>
+              <button
+                type="button"
+                className="btn btn-sm btn-secondary"
+                onClick={handleCheckDuplicates}
+                disabled={checkingDuplicates || !article.title}
+                style={{ fontSize: '0.75rem' }}
+              >
+                {checkingDuplicates ? 'Checking...' : 'Check for Duplicates'}
+              </button>
+            </div>
             <input
               type="text"
               className="form-input"
               value={article.title}
-              onChange={(e) => setArticle({ ...article, title: e.target.value })}
+              onChange={(e) => { setArticle({ ...article, title: e.target.value }); setDuplicateCheck(null); }}
               placeholder="Enter article title"
               required
             />
           </div>
+
+          {/* Duplicate Check Results */}
+          {duplicateCheck && (
+            <div className="form-group">
+              <div style={{
+                padding: '1rem',
+                borderRadius: '0.5rem',
+                border: `1px solid ${duplicateCheck.is_duplicate ? '#FECACA' : '#BBF7D0'}`,
+                background: duplicateCheck.is_duplicate ? '#FEF2F2' : '#F0FDF4'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                  <span style={{
+                    padding: '0.25rem 0.75rem',
+                    borderRadius: '9999px',
+                    fontWeight: 700,
+                    fontSize: '0.875rem',
+                    background: duplicateCheck.is_duplicate ? '#EF4444' : '#10B981',
+                    color: 'white'
+                  }}>
+                    {duplicateCheck.is_duplicate ? 'Potential Duplicate' : 'Looks Unique'}
+                  </span>
+                  <span style={{ fontSize: '0.875rem', color: '#374151' }}>
+                    Similarity: <strong>{duplicateCheck.similarity_score ?? 0}%</strong>
+                  </span>
+                  {/* Similarity score bar */}
+                  <div style={{ flex: 1, height: '0.5rem', background: '#E5E7EB', borderRadius: '9999px', overflow: 'hidden' }}>
+                    <div style={{
+                      height: '100%',
+                      width: `${duplicateCheck.similarity_score ?? 0}%`,
+                      background: (duplicateCheck.similarity_score ?? 0) > 70 ? '#EF4444' : (duplicateCheck.similarity_score ?? 0) > 40 ? '#F59E0B' : '#10B981',
+                      transition: 'width 0.3s ease'
+                    }} />
+                  </div>
+                </div>
+                {duplicateCheck.recommendation && (
+                  <p style={{ fontSize: '0.875rem', color: '#374151', margin: '0.25rem 0' }}>{duplicateCheck.recommendation}</p>
+                )}
+                {duplicateCheck.similar_articles && duplicateCheck.similar_articles.length > 0 && (
+                  <div style={{ marginTop: '0.75rem' }}>
+                    <strong style={{ fontSize: '0.875rem' }}>Similar articles:</strong>
+                    <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.25rem' }}>
+                      {duplicateCheck.similar_articles.map((sa, i) => (
+                        <li key={i} style={{ fontSize: '0.875rem', color: '#374151', marginBottom: '0.25rem' }}>
+                          <a href={`/articles/${sa.id}`} target="_blank" rel="noreferrer" style={{ color: '#3B82F6', fontWeight: 500 }}>{sa.title}</a>
+                          {sa.similarity_reason && <span style={{ color: '#6B7280' }}> — {sa.similarity_reason}</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="form-group">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>

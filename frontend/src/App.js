@@ -34,6 +34,8 @@ import AISearchOptimizer from './pages/AISearchOptimizer';
 import AIOutdatedContent from './pages/AIOutdatedContent';
 import AITranslationEngine from './pages/AITranslationEngine';
 import AIFaqGenerator from './pages/AIFaqGenerator';
+import SmartSuggestions from './pages/SmartSuggestions';
+import KnowledgeGraph from './pages/KnowledgeGraph';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -93,6 +95,8 @@ function App() {
           <Route path="ai-features/translation-engine/:id" element={<AITranslationEngine />} />
           <Route path="ai-features/faq-generator" element={<AIFaqGenerator />} />
           <Route path="ai-features/faq-generator/:id" element={<AIFaqGenerator />} />
+          <Route path="smart-suggestions" element={<SmartSuggestions />} />
+          <Route path="knowledge-graph" element={<KnowledgeGraph />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="profile" element={<Profile />} />
           <Route path="users" element={<Users />} />

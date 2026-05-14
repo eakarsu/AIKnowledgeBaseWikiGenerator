@@ -11,6 +11,7 @@ const Articles = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState({ status: '', search: '' });
   const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
   const [hasMore, setHasMore] = useState(true);
   const [sortBy, setSortBy] = useState('updated_at');
   const [sortOrder, setSortOrder] = useState('desc');
@@ -31,14 +32,18 @@ const Articles = () => {
       const params = new URLSearchParams();
       if (filter.status) params.append('status', filter.status);
       if (filter.search) params.append('search', filter.search);
+      params.append('page', pageNum);
       params.append('limit', ITEMS_PER_PAGE);
-      params.append('offset', (pageNum - 1) * ITEMS_PER_PAGE);
       params.append('sort', sortBy);
       params.append('order', sortOrder);
 
       const response = await api.get(`/articles?${params}`);
-      setArticles(response.data);
-      setHasMore(response.data.length === ITEMS_PER_PAGE);
+      // Support both paginated response {data, pagination} and plain array
+      const data = Array.isArray(response.data) ? response.data : (response.data.data || []);
+      const pag = response.data.pagination || null;
+      setArticles(data);
+      setPagination(pag);
+      setHasMore(pag ? pageNum < pag.totalPages : data.length === ITEMS_PER_PAGE);
     } catch (error) {
       console.error('Failed to fetch articles:', error);
       addToast('Failed to load articles', 'error');
@@ -147,7 +152,9 @@ const Articles = () => {
       <div className="page-header">
         <div>
           <h1 className="page-title">Articles</h1>
-          <p className="page-subtitle">{articles.length} articles in your knowledge base</p>
+          <p className="page-subtitle">
+            {pagination ? `${pagination.total} articles in your knowledge base` : `${articles.length} articles in your knowledge base`}
+          </p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button className="btn btn-secondary btn-sm" onClick={handleExportCSV}>CSV</button>
@@ -262,7 +269,10 @@ const Articles = () => {
             <button className="btn btn-secondary" onClick={() => handlePageChange(page - 1)} disabled={page === 1}>
               Previous
             </button>
-            <span style={{ color: '#6B7280' }}>Page {page}</span>
+            <span style={{ color: '#6B7280' }}>
+              Page {page}{pagination ? ` of ${pagination.totalPages}` : ''}
+              {pagination && <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem' }}>({pagination.total} total)</span>}
+            </span>
             <button className="btn btn-secondary" onClick={() => handlePageChange(page + 1)} disabled={!hasMore}>
               Next
             </button>

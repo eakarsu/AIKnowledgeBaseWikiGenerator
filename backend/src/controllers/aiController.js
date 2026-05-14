@@ -260,8 +260,297 @@ const getHistory = async (req, res) => {
   }
 };
 
+// ── POST /ai/generate/stream ──────────────────────────────────────────────────
+// Server-Sent Events (SSE) streaming version of generateContent.
+// The client connects and receives incremental token chunks as they arrive from
+// the AI model, then a final [DONE] event when complete.
+// The full generated content is also persisted to ai_generations.
+const generateContentStream = async (req, res) => {
+  const { topic, type = 'article' } = req.body;
+
+  if (!topic) {
+    return res.status(400).json({ error: 'Topic is required' });
+  }
+
+  // Set SSE headers before starting the stream
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx proxy buffering
+  res.flushHeaders();
+
+  const prompts = {
+    article: `Write a comprehensive knowledge base article about "${topic}". Include:
+      - Clear introduction
+      - Main content with subheadings
+      - Key points and best practices
+      - Conclusion
+      Format in markdown.`,
+    tutorial: `Create a step-by-step tutorial about "${topic}". Include:
+      - Prerequisites
+      - Numbered steps with clear instructions
+      - Code examples if applicable
+      - Tips and troubleshooting
+      Format in markdown.`,
+    faq: `Generate a FAQ section about "${topic}". Include:
+      - 5-10 common questions
+      - Detailed answers for each
+      - Related resources
+      Format in markdown.`,
+    documentation: `Write technical documentation about "${topic}". Include:
+      - Overview
+      - Features/Components
+      - Usage examples
+      - API reference if applicable
+      Format in markdown.`
+  };
+
+  const messages = [
+    { role: 'system', content: 'You are a professional technical writer creating knowledge base content.' },
+    { role: 'user', content: prompts[type] || prompts.article }
+  ];
+
+  try {
+    const fullContent = await aiService.makeStreamingRequest(messages, res);
+
+    // Persist after stream completes
+    await pool.query(
+      'INSERT INTO ai_generations (type, prompt, result, model, user_id) VALUES ($1, $2, $3, $4, $5)',
+      ['content_generation_stream', topic, fullContent, process.env.OPENROUTER_MODEL || 'anthropic/claude-haiku-4.5', req.user.id]
+    );
+
+    // Signal completion with metadata
+    res.write(`data: ${JSON.stringify({ done: true, topic, type })}\n\n`);
+    res.end();
+  } catch (error) {
+    console.error('Generate content stream error:', error);
+    // Attempt to send error over the still-open SSE connection
+    try {
+      res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+      res.end();
+    } catch {
+      res.end();
+    }
+  }
+};
+
+// POST /api/ai/duplicate-check
+// Semantic duplicate detector: compares new article against existing articles in same category
+const duplicateCheck = async (req, res) => {
+  try {
+    const { title, summary, categoryId } = req.body;
+
+    if (!title) {
+      return res.status(400).json({ error: 'title is required' });
+    }
+
+    // Fetch existing articles in the same category (limit 50)
+    let existingArticles;
+    if (categoryId) {
+      existingArticles = await pool.query(
+        'SELECT id, title, summary FROM articles WHERE category_id = $1 ORDER BY updated_at DESC LIMIT 50',
+        [categoryId]
+      );
+    } else {
+      existingArticles = await pool.query(
+        'SELECT id, title, summary FROM articles ORDER BY updated_at DESC LIMIT 50'
+      );
+    }
+
+    const articleList = existingArticles.rows
+      .map(a => `- ID: ${a.id} | Title: ${a.title}${a.summary ? ' | Summary: ' + a.summary.substring(0, 100) : ''}`)
+      .join('\n');
+
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are a semantic duplicate detection AI. Compare article titles and summaries for semantic similarity. Always return valid JSON with no markdown.'
+      },
+      {
+        role: 'user',
+        content: `Check if this new article is a semantic duplicate of any existing articles.
+
+New article:
+Title: ${title}
+Summary: ${summary || 'N/A'}
+
+Existing articles:
+${articleList || 'No existing articles'}
+
+Return JSON: { "is_duplicate": boolean, "similarity_score": number (0-100), "similar_articles": [{"id": "...", "title": "...", "similarity_reason": "..."}], "recommendation": "string" }`
+      }
+    ];
+
+    const result = await aiService.makeRequest(messages);
+
+    let parsed;
+    try {
+      const jsonMatch = result.match(/\{[\s\S]*\}/);
+      parsed = JSON.parse(jsonMatch ? jsonMatch[0] : result);
+    } catch {
+      parsed = { is_duplicate: false, similarity_score: 0, similar_articles: [], recommendation: result };
+    }
+
+    await pool.query(
+      'INSERT INTO ai_generations (type, prompt, result, model, user_id) VALUES ($1, $2, $3, $4, $5)',
+      ['duplicate_check', title, JSON.stringify(parsed), process.env.OPENROUTER_MODEL || 'anthropic/claude-3-5-sonnet-20241022', req.user.id]
+    );
+
+    res.json(parsed);
+  } catch (error) {
+    console.error('Duplicate check error:', error);
+    res.status(500).json({ error: 'Failed to check for duplicates' });
+  }
+};
+
+// GET /api/ai/freshness-report
+// Runs detectOutdatedContent on articles not updated in 90+ days, aggregates by category
+const freshnessReport = async (req, res) => {
+  try {
+    const staleArticles = await pool.query(`
+      SELECT a.id, a.title, a.summary, a.status, a.views, a.updated_at,
+             c.name as category_name
+      FROM articles a
+      LEFT JOIN categories c ON a.category_id = c.id
+      WHERE a.updated_at < NOW() - INTERVAL '90 days'
+        AND a.status != 'archived'
+      ORDER BY a.updated_at ASC
+      LIMIT 100
+    `);
+
+    if (staleArticles.rows.length === 0) {
+      return res.json({
+        stale_count: 0,
+        categories: [],
+        report: 'All articles are up to date (updated within the last 90 days).',
+        generated_at: new Date().toISOString()
+      });
+    }
+
+    // Aggregate by category
+    const byCategory = {};
+    staleArticles.rows.forEach(a => {
+      const cat = a.category_name || 'Uncategorized';
+      if (!byCategory[cat]) byCategory[cat] = [];
+      byCategory[cat].push({ id: a.id, title: a.title, last_updated: a.updated_at, views: a.views });
+    });
+
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are a knowledge base editorial AI. Analyze article freshness data and produce an editorial health report with actionable recommendations for content teams.'
+      },
+      {
+        role: 'user',
+        content: `Generate a content freshness editorial health report for these ${staleArticles.rows.length} articles not updated in 90+ days, grouped by category:
+
+${JSON.stringify(byCategory, null, 2)}
+
+Return a structured report with: overall health score (0-100), category-level findings, top 5 articles needing immediate update, and recommended editorial actions.`
+      }
+    ];
+
+    const result = await aiService.makeRequest(messages);
+
+    await pool.query(
+      'INSERT INTO ai_generations (type, prompt, result, model, user_id) VALUES ($1, $2, $3, $4, $5)',
+      ['freshness_report', `Freshness report: ${staleArticles.rows.length} stale articles`, result, process.env.OPENROUTER_MODEL || 'anthropic/claude-3-5-sonnet-20241022', req.user.id]
+    );
+
+    res.json({
+      stale_count: staleArticles.rows.length,
+      categories: Object.entries(byCategory).map(([cat, articles]) => ({ category: cat, stale_articles: articles.length, articles })),
+      report: result,
+      generated_at: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Freshness report error:', error);
+    res.status(500).json({ error: 'Failed to generate freshness report' });
+  }
+};
+
+// POST /api/ai/knowledge-gap
+// Analyze team bookmarks + search history to find topics frequently searched but rarely found
+const knowledgeGapAnalysis = async (req, res) => {
+  try {
+    // Get search history
+    const searchHistory = await pool.query(
+      `SELECT query, COUNT(*) as search_count
+       FROM search_history
+       WHERE user_id = $1
+       GROUP BY query
+       ORDER BY search_count DESC
+       LIMIT 50`,
+      [req.user.id]
+    );
+
+    // Get bookmarks
+    const bookmarks = await pool.query(
+      `SELECT a.title, a.category_id, c.name as category_name
+       FROM bookmarks b
+       JOIN articles a ON b.article_id = a.id
+       LEFT JOIN categories c ON a.category_id = c.id
+       WHERE b.user_id = $1
+       LIMIT 50`,
+      [req.user.id]
+    );
+
+    // Get total article count per topic area (category)
+    const categoryArticleCounts = await pool.query(
+      `SELECT c.name as category, COUNT(a.id) as article_count
+       FROM categories c
+       LEFT JOIN articles a ON a.category_id = c.id
+       GROUP BY c.name
+       ORDER BY article_count ASC`
+    );
+
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are a knowledge management AI. Identify gaps in a knowledge base by analyzing search patterns, bookmarks, and article coverage. Generate specific article topic suggestions to fill those gaps.'
+      },
+      {
+        role: 'user',
+        content: `Analyze this team member's knowledge base usage patterns to identify knowledge gaps:
+
+Search History (frequent searches):
+${JSON.stringify(searchHistory.rows, null, 2)}
+
+Bookmarked Articles:
+${JSON.stringify(bookmarks.rows, null, 2)}
+
+Category Article Counts (lower = less coverage):
+${JSON.stringify(categoryArticleCounts.rows, null, 2)}
+
+Identify: 1) Topics searched frequently but likely lacking articles, 2) Categories with thin coverage, 3) Generate 5 specific article title suggestions to fill the most critical gaps. Return as structured JSON with: gaps (array), suggested_articles (array with title, category, rationale), priority_score (0-100).`
+      }
+    ];
+
+    const result = await aiService.makeRequest(messages);
+
+    let parsed;
+    try {
+      const m = result.match(/\{[\s\S]*\}/);
+      parsed = JSON.parse(m ? m[0] : result);
+    } catch {
+      parsed = { analysis: result };
+    }
+
+    await pool.query(
+      'INSERT INTO ai_generations (type, prompt, result, model, user_id) VALUES ($1, $2, $3, $4, $5)',
+      ['knowledge_gap', 'Team knowledge gap analysis', JSON.stringify(parsed), process.env.OPENROUTER_MODEL || 'anthropic/claude-3-5-sonnet-20241022', req.user.id]
+    );
+
+    res.json({ ...parsed, generated_at: new Date().toISOString() });
+  } catch (error) {
+    console.error('Knowledge gap analysis error:', error);
+    res.status(500).json({ error: 'Failed to analyze knowledge gaps' });
+  }
+};
+
 module.exports = {
   generateContent,
+  generateContentStream,
   summarize,
   answerQuestion,
   translate,
@@ -270,5 +559,8 @@ module.exports = {
   generateTags,
   generateTitle,
   chat,
-  getHistory
+  getHistory,
+  duplicateCheck,
+  freshnessReport,
+  knowledgeGapAnalysis
 };

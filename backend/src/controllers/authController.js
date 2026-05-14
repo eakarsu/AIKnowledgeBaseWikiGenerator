@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { pool } = require('../config/database');
 const { generateToken } = require('../middleware/auth');
+const { sendPasswordResetEmail, sendVerificationEmail } = require('../services/emailService');
 
 const register = async (req, res) => {
   try {
@@ -31,6 +32,10 @@ const register = async (req, res) => {
       [user.id, verificationToken, new Date(Date.now() + 24 * 60 * 60 * 1000)]
     );
     console.log(`[Email Verification] Token for ${email}: ${verificationToken}`);
+    // Fire-and-forget email send (non-blocking)
+    sendVerificationEmail(email, verificationToken).catch(err =>
+      console.error('[EmailService] Failed to send verification email:', err.message)
+    );
 
     const token = generateToken(user);
 
@@ -107,6 +112,10 @@ const forgotPassword = async (req, res) => {
     );
 
     console.log(`[Password Reset] Token for ${email}: ${resetToken}`);
+    // Fire-and-forget email send (non-blocking)
+    sendPasswordResetEmail(email, resetToken).catch(err =>
+      console.error('[EmailService] Failed to send password reset email:', err.message)
+    );
     res.json({ message: 'If that email is registered, a reset link has been sent.' });
   } catch (error) {
     console.error('Forgot password error:', error);
@@ -215,7 +224,14 @@ const resendVerification = async (req, res) => {
       [req.user.id, verificationToken, new Date(Date.now() + 24 * 60 * 60 * 1000)]
     );
 
-    console.log(`[Email Verification] Resent token for ${userResult.rows[0]?.email}: ${verificationToken}`);
+    const userEmail = userResult.rows[0]?.email;
+    console.log(`[Email Verification] Resent token for ${userEmail}: ${verificationToken}`);
+    // Fire-and-forget email send (non-blocking)
+    if (userEmail) {
+      sendVerificationEmail(userEmail, verificationToken).catch(err =>
+        console.error('[EmailService] Failed to resend verification email:', err.message)
+      );
+    }
     res.json({ message: 'Verification email resent' });
   } catch (error) {
     console.error('Resend verification error:', error);
