@@ -32,6 +32,7 @@ const Layout = () => {
       { path: '/smart-suggestions', icon: '💡', label: 'Smart Suggestions' },
       { path: '/features', icon: '🏆', label: 'Features' },
       { path: '/analytics', icon: '📈', label: 'Analytics' },
+      { path: '/custom-views', icon: '🧩', label: 'KB Views' },
     ]},
     { section: 'Account', items: [
       { path: '/notifications', icon: '🔔', label: 'Notifications' },
