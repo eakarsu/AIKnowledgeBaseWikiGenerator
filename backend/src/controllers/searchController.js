@@ -8,15 +8,25 @@ const search = async (req, res) => {
       return res.status(400).json({ error: 'Search query is required' });
     }
 
+    // Use PostgreSQL full-text search (ts_rank + GIN index) for ranking,
+    // with ILIKE fallback in the WHERE so short/common terms still match.
     let query = `
       SELECT DISTINCT a.*, u.name as author_name, c.name as category_name,
-             ts_rank(to_tsvector('english', a.title || ' ' || COALESCE(a.content, '')), plainto_tsquery('english', $1)) as rank
+             ts_rank(
+               to_tsvector('english', a.title || ' ' || COALESCE(a.content, '') || ' ' || COALESCE(a.summary, '')),
+               plainto_tsquery('english', $1)
+             ) as rank
       FROM articles a
       LEFT JOIN users u ON a.author_id = u.id
       LEFT JOIN categories c ON a.category_id = c.id
       LEFT JOIN article_tags at ON a.id = at.article_id
       LEFT JOIN tags t ON at.tag_id = t.id
-      WHERE (a.title ILIKE $2 OR a.content ILIKE $2 OR a.summary ILIKE $2)
+      WHERE (
+        to_tsvector('english', a.title || ' ' || COALESCE(a.content, '') || ' ' || COALESCE(a.summary, ''))
+          @@ plainto_tsquery('english', $1)
+        OR a.title ILIKE $2
+        OR a.summary ILIKE $2
+      )
     `;
     const params = [q, `%${q}%`];
     let paramIndex = 3;

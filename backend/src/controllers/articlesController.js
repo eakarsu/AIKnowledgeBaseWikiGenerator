@@ -1,8 +1,23 @@
 const { pool } = require('../config/database');
+const aiService = require('../services/aiService');
 
 const getAll = async (req, res) => {
   try {
-    const { category, status, search, limit = 50, offset = 0, sort, order } = req.query;
+    const { category, status, search, sort, order } = req.query;
+    // Pagination: support both page/limit and offset/limit for backward compat
+    const page = parseInt(req.query.page) || null;
+    const limit = parseInt(req.query.limit) || 50;
+    const offset = page ? (page - 1) * limit : parseInt(req.query.offset) || 0;
+
+    let countQuery = `
+      SELECT COUNT(DISTINCT a.id) as total
+      FROM articles a
+      LEFT JOIN users u ON a.author_id = u.id
+      LEFT JOIN categories c ON a.category_id = c.id
+      LEFT JOIN article_tags at ON a.id = at.article_id
+      LEFT JOIN tags t ON at.tag_id = t.id
+      WHERE 1=1
+    `;
     let query = `
       SELECT a.*, u.name as author_name, c.name as category_name,
              array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL) as tags
@@ -17,15 +32,21 @@ const getAll = async (req, res) => {
     let paramIndex = 1;
 
     if (category) {
-      query += ` AND a.category_id = $${paramIndex++}`;
+      const clause = ` AND a.category_id = $${paramIndex++}`;
+      query += clause;
+      countQuery += clause;
       params.push(category);
     }
     if (status) {
-      query += ` AND a.status = $${paramIndex++}`;
+      const clause = ` AND a.status = $${paramIndex++}`;
+      query += clause;
+      countQuery += clause;
       params.push(status);
     }
     if (search) {
-      query += ` AND (a.title ILIKE $${paramIndex} OR a.content ILIKE $${paramIndex})`;
+      const clause = ` AND (a.title ILIKE $${paramIndex} OR a.content ILIKE $${paramIndex})`;
+      query += clause;
+      countQuery += clause;
       params.push(`%${search}%`);
       paramIndex++;
     }
@@ -37,8 +58,29 @@ const getAll = async (req, res) => {
     query += ` GROUP BY a.id, u.name, c.name ORDER BY ${sortColumn} ${sortOrder} LIMIT $${paramIndex++} OFFSET $${paramIndex}`;
     params.push(limit, offset);
 
-    const result = await pool.query(query, params);
-    res.json(result.rows);
+    const [result, countResult] = await Promise.all([
+      pool.query(query, params),
+      pool.query(countQuery, params.slice(0, paramIndex - 3)) // count uses same filters but no limit/offset
+    ]);
+
+    const total = parseInt(countResult.rows[0]?.total || 0);
+    const totalPages = Math.ceil(total / limit);
+    const currentPage = page || Math.floor(offset / limit) + 1;
+
+    // Return paginated response when page param used, otherwise plain array for backward compat
+    if (req.query.page) {
+      res.json({
+        data: result.rows,
+        pagination: {
+          page: currentPage,
+          limit,
+          total,
+          totalPages
+        }
+      });
+    } else {
+      res.json(result.rows);
+    }
   } catch (error) {
     console.error('Get articles error:', error);
     res.status(500).json({ error: 'Failed to get articles' });
@@ -217,4 +259,57 @@ const bulkUpdate = async (req, res) => {
   }
 };
 
-module.exports = { getAll, getById, create, update, remove, bulkDelete, bulkUpdate };
+// PUT /api/articles/:id/submit-for-review
+// Updates article status to 'in-review', fire-and-forget AI suggestions as a system comment
+const submitForReview = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      `UPDATE articles SET status = 'in-review', updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Article not found' });
+    }
+
+    const article = result.rows[0];
+
+    // Fire-and-forget: generate AI suggestions and post as system comment
+    if (article.content) {
+      (async () => {
+        try {
+          const suggestionsText = await aiService.generateSuggestions(article.content);
+          let suggestions = [];
+          try {
+            const jsonMatch = suggestionsText.match(/\[[\s\S]*\]/);
+            suggestions = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+          } catch {
+            suggestions = [];
+          }
+
+          const commentContent = `[AI Review] Automated suggestions for "${article.title}":\n\n${
+            suggestions.map((s, i) =>
+              `${i + 1}. [${s.type || 'general'} / ${s.priority || 'medium'} priority] ${s.suggestion}`
+            ).join('\n')
+          }`;
+
+          await pool.query(
+            `INSERT INTO comments (content, article_id, user_id) VALUES ($1, $2, NULL)`,
+            [commentContent, id]
+          );
+        } catch (err) {
+          console.error('AI review comment error:', err.message);
+        }
+      })();
+    }
+
+    res.json(article);
+  } catch (error) {
+    console.error('Submit for review error:', error);
+    res.status(500).json({ error: 'Failed to submit article for review' });
+  }
+};
+
+module.exports = { getAll, getById, create, update, remove, bulkDelete, bulkUpdate, submitForReview };

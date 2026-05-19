@@ -22,6 +22,7 @@ const ArticleDetail = () => {
   const [translateLanguage, setTranslateLanguage] = useState('Spanish');
   const [translating, setTranslating] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [submittingForReview, setSubmittingForReview] = useState(false);
 
   // Close export menu when clicking outside
   useEffect(() => {
@@ -191,6 +192,21 @@ const ArticleDetail = () => {
     });
   };
 
+  const handleSubmitForReview = async () => {
+    setSubmittingForReview(true);
+    try {
+      const response = await api.put(`/articles/${id}/submit-for-review`);
+      setArticle(response.data);
+      addToast('Article submitted for review. AI suggestions will appear as a comment shortly.', 'success');
+      // Refresh comments after a short delay to pick up AI comment
+      setTimeout(() => fetchComments(), 3000);
+    } catch (error) {
+      addToast(error.response?.data?.error || 'Failed to submit for review', 'error');
+    } finally {
+      setSubmittingForReview(false);
+    }
+  };
+
   const handleExport = (format) => {
     if (!article) return;
 
@@ -248,8 +264,13 @@ const ArticleDetail = () => {
           <span>•</span>
           <span>{article.views} views</span>
           <span>•</span>
-          <span className={`badge ${article.status === 'published' ? 'badge-success' : 'badge-warning'}`}>
-            {article.status}
+          <span className={`badge ${
+            article.status === 'published' ? 'badge-success' :
+            article.status === 'in-review' ? 'badge-primary' :
+            article.status === 'approved' ? 'badge-success' :
+            'badge-warning'
+          }`}>
+            {article.status === 'in-review' ? 'In Review' : article.status}
           </span>
         </div>
 
@@ -267,6 +288,16 @@ const ArticleDetail = () => {
           <button className="btn btn-primary" onClick={() => navigate(`/articles/${id}/edit`)}>
             ✏️ Edit
           </button>
+          {article.status === 'draft' && (
+            <button
+              className="btn btn-secondary"
+              onClick={handleSubmitForReview}
+              disabled={submittingForReview}
+              style={{ background: '#8B5CF6', color: 'white', borderColor: '#8B5CF6' }}
+            >
+              {submittingForReview ? 'Submitting...' : 'Submit for Review'}
+            </button>
+          )}
           <button className="btn btn-secondary" onClick={toggleBookmark}>
             {bookmarked ? '★ Bookmarked' : '☆ Bookmark'}
           </button>
@@ -352,20 +383,37 @@ const ArticleDetail = () => {
 
             {comments.length > 0 ? (
               <div>
-                {comments.map((comment) => (
-                  <div key={comment.id} style={{ padding: '1rem 0', borderBottom: '1px solid #E5E7EB' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                      <div className="user-avatar" style={{ width: '1.5rem', height: '1.5rem', fontSize: '0.75rem' }}>
-                        {comment.user_name?.charAt(0).toUpperCase() || 'U'}
+                {comments.map((comment) => {
+                  const isAiReview = comment.content && comment.content.startsWith('[AI Review]');
+                  return (
+                    <div key={comment.id} style={{
+                      padding: '1rem 0',
+                      borderBottom: '1px solid #E5E7EB',
+                      background: isAiReview ? '#FAFAF5' : 'transparent'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                        <div className="user-avatar" style={{
+                          width: '1.5rem', height: '1.5rem', fontSize: '0.75rem',
+                          background: isAiReview ? '#8B5CF6' : undefined
+                        }}>
+                          {isAiReview ? 'AI' : (comment.user_name?.charAt(0).toUpperCase() || 'U')}
+                        </div>
+                        <strong style={{ fontSize: '0.875rem' }}>
+                          {isAiReview ? 'AI Review' : comment.user_name}
+                        </strong>
+                        {isAiReview && (
+                          <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.5rem', borderRadius: '9999px', background: '#8B5CF620', color: '#8B5CF6', fontWeight: 600 }}>
+                            AI Review
+                          </span>
+                        )}
+                        <span style={{ fontSize: '0.75rem', color: '#6B7280' }}>
+                          {new Date(comment.created_at).toLocaleDateString()}
+                        </span>
                       </div>
-                      <strong style={{ fontSize: '0.875rem' }}>{comment.user_name}</strong>
-                      <span style={{ fontSize: '0.75rem', color: '#6B7280' }}>
-                        {new Date(comment.created_at).toLocaleDateString()}
-                      </span>
+                      <p style={{ fontSize: '0.875rem', color: '#374151', whiteSpace: 'pre-line' }}>{comment.content}</p>
                     </div>
-                    <p style={{ fontSize: '0.875rem', color: '#374151' }}>{comment.content}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <p style={{ color: '#6B7280', fontSize: '0.875rem' }}>No comments yet. Be the first to comment!</p>

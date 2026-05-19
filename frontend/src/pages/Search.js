@@ -2,6 +2,24 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
+const FTS_BADGE = (
+  <span title="Full-text search powered by PostgreSQL GIN index" style={{
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.25rem',
+    fontSize: '0.7rem',
+    padding: '0.125rem 0.5rem',
+    borderRadius: '9999px',
+    background: '#EFF6FF',
+    color: '#3B82F6',
+    border: '1px solid #BFDBFE',
+    fontWeight: 600,
+    marginLeft: '0.5rem'
+  }}>
+    Full-text search
+  </span>
+);
+
 const Search = () => {
   const [query, setQuery] = useState('');
   const [articles, setArticles] = useState([]);
@@ -12,6 +30,7 @@ const Search = () => {
   const [allData, setAllData] = useState({ articles: [], categories: [], tags: [], templates: [], teams: [] });
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [ftsResults, setFtsResults] = useState(null); // null = not searched, array = FTS results
   const navigate = useNavigate();
   const debounceRef = useRef(null);
 
@@ -49,24 +68,21 @@ const Search = () => {
     }
   };
 
-  const performSearch = (searchQuery) => {
+  const performSearch = async (searchQuery) => {
     if (!searchQuery.trim()) {
       setArticles(allData.articles);
       setCategories(allData.categories);
       setTags(allData.tags);
       setTemplates(allData.templates);
       setTeams(allData.teams);
+      setFtsResults(null);
       setSearchLoading(false);
       return;
     }
 
     const lowerQuery = searchQuery.toLowerCase();
 
-    setArticles(allData.articles.filter(a =>
-      a.title.toLowerCase().includes(lowerQuery) ||
-      a.summary?.toLowerCase().includes(lowerQuery) ||
-      a.author_name?.toLowerCase().includes(lowerQuery)
-    ));
+    // Client-side filter for non-article entities
     setCategories(allData.categories.filter(c =>
       c.name.toLowerCase().includes(lowerQuery) ||
       c.description?.toLowerCase().includes(lowerQuery)
@@ -82,6 +98,22 @@ const Search = () => {
       t.name.toLowerCase().includes(lowerQuery) ||
       t.description?.toLowerCase().includes(lowerQuery)
     ));
+
+    // Full-text search for articles via backend
+    try {
+      const response = await api.get(`/articles/search?q=${encodeURIComponent(searchQuery)}&limit=50`);
+      const ftsArticles = response.data.results || response.data;
+      setArticles(ftsArticles);
+      setFtsResults({ total: response.data.total || ftsArticles.length, query: searchQuery });
+    } catch {
+      // Fallback to client-side filter
+      setArticles(allData.articles.filter(a =>
+        a.title.toLowerCase().includes(lowerQuery) ||
+        a.summary?.toLowerCase().includes(lowerQuery) ||
+        a.author_name?.toLowerCase().includes(lowerQuery)
+      ));
+      setFtsResults(null);
+    }
     setSearchLoading(false);
   };
 
@@ -132,8 +164,12 @@ const Search = () => {
           )}
         </div>
         {query && (
-          <p style={{ marginTop: '0.5rem', color: '#6B7280', fontSize: '0.875rem' }}>
+          <p style={{ marginTop: '0.5rem', color: '#6B7280', fontSize: '0.875rem', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.25rem' }}>
             Found {totalResults} results for "{query}"
+            {ftsResults && FTS_BADGE}
+            {ftsResults && (
+              <span style={{ color: '#9CA3AF' }}>— {ftsResults.total} article(s) matched by full-text search</span>
+            )}
           </p>
         )}
       </div>

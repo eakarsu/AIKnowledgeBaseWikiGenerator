@@ -6,7 +6,7 @@ class AIService {
   constructor() {
     this.apiKey = process.env.OPENROUTER_API_KEY;
     this.baseUrl = process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1';
-    this.model = process.env.OPENROUTER_MODEL || 'anthropic/claude-haiku-4.5';
+    this.model = process.env.OPENROUTER_MODEL || 'anthropic/claude-3-5-sonnet-20241022';
   }
 
   async makeRequest(messages, model = null) {
@@ -15,7 +15,7 @@ class AIService {
       const data = JSON.stringify({
         model: useModel,
         messages: messages,
-        max_tokens: 16000,
+        max_tokens: 8000,
         temperature: 0.7
       });
 
@@ -49,6 +49,81 @@ class AIService {
             reject(e);
           }
         });
+      });
+
+      req.on('error', reject);
+      req.write(data);
+      req.end();
+    });
+  }
+
+  // Stream SSE chunks to an Express response object.
+  // The caller must set SSE headers before calling this method.
+  // Resolves with the full accumulated content when the stream ends.
+  makeStreamingRequest(messages, sseRes, model = null) {
+    const useModel = model || this.model;
+    return new Promise((resolve, reject) => {
+      const data = JSON.stringify({
+        model: useModel,
+        messages,
+        max_tokens: 8000,
+        temperature: 0.7,
+        stream: true
+      });
+
+      const options = {
+        hostname: 'openrouter.ai',
+        port: 443,
+        path: '/api/v1/chat/completions',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.apiKey}`,
+          'HTTP-Referer': 'http://localhost:3000',
+          'X-Title': 'Knowledge Base Wiki Generator'
+        }
+      };
+
+      let fullContent = '';
+
+      const req = https.request(options, (res) => {
+        let buffer = '';
+
+        res.on('data', (chunk) => {
+          buffer += chunk.toString();
+          const lines = buffer.split('\n');
+          // Keep incomplete last line in buffer
+          buffer = lines.pop();
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed === 'data: [DONE]') {
+              if (trimmed === 'data: [DONE]') {
+                sseRes.write('data: [DONE]\n\n');
+              }
+              continue;
+            }
+            if (trimmed.startsWith('data: ')) {
+              try {
+                const parsed = JSON.parse(trimmed.slice(6));
+                const delta = parsed.choices?.[0]?.delta?.content || '';
+                if (delta) {
+                  fullContent += delta;
+                  // Send SSE event with the token chunk
+                  sseRes.write(`data: ${JSON.stringify({ delta })}\n\n`);
+                }
+              } catch {
+                // Ignore malformed SSE lines
+              }
+            }
+          }
+        });
+
+        res.on('end', () => {
+          resolve(fullContent);
+        });
+
+        res.on('error', reject);
       });
 
       req.on('error', reject);

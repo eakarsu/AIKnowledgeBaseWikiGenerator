@@ -326,6 +326,11 @@ const initializeDatabase = async () => {
 
       ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT false;
 
+      -- Full-text search GIN index on articles (title + content)
+      -- Used by searchController for ts_rank queries
+      CREATE INDEX IF NOT EXISTS idx_articles_fts
+        ON articles USING GIN (to_tsvector('english', title || ' ' || COALESCE(content, '') || ' ' || COALESCE(summary, '')));
+
       -- AI Translations (enhanced) table
       CREATE TABLE IF NOT EXISTS ai_translations (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
