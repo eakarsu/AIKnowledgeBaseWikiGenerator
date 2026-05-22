@@ -60,7 +60,7 @@ const getAll = async (req, res) => {
 
     const [result, countResult] = await Promise.all([
       pool.query(query, params),
-      pool.query(countQuery, params.slice(0, paramIndex - 3)) // count uses same filters but no limit/offset
+      pool.query(countQuery, params.slice(0, params.length - 2)) // count uses same filters but no limit/offset
     ]);
 
     const total = parseInt(countResult.rows[0]?.total || 0);

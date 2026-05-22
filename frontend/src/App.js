@@ -37,6 +37,12 @@ import AIFaqGenerator from './pages/AIFaqGenerator';
 import SmartSuggestions from './pages/SmartSuggestions';
 import KnowledgeGraph from './pages/KnowledgeGraph';
 import CustomViewsPage from './pages/CustomViewsPage';
+import ArticleOwnershipDrift from './pages/ArticleOwnershipDrift';
+
+import CodexCustomVizFeature from './pages/CodexCustomVizFeature';
+import CodexOperationsFeature from './pages/CodexOperationsFeature';
+
+import TimelineView from './pages/TimelineView';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -56,6 +62,10 @@ function App() {
   return (
     <ErrorBoundary>
       <Routes>
+        <Route path="/insights/timeline" element={<ProtectedRoute><TimelineView /></ProtectedRoute>} />
+        <Route path="/codex/custom-viz" element={<ProtectedRoute><CodexCustomVizFeature /></ProtectedRoute>} />
+        <Route path="/codex/operations" element={<ProtectedRoute><CodexOperationsFeature /></ProtectedRoute>} />
+
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -102,6 +112,7 @@ function App() {
           <Route path="profile" element={<Profile />} />
           <Route path="users" element={<Users />} />
           <Route path="custom-views" element={<CustomViewsPage />} />
+          <Route path="article-ownership-drift" element={<ArticleOwnershipDrift />} />
         </Route>
       </Routes>
     </ErrorBoundary>

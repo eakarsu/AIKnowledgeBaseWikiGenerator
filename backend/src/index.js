@@ -34,6 +34,7 @@ app.use((req, res, next) => {
 // API routes
 app.use('/api', routes);
 app.use('/api/knowledge-graph-agents', aiLimiter, require('./routes/knowledgeGraphAgents'));
+app.use('/api/article-ownership-drift', require('./routes/article-ownership-drift'));
 
 // Custom Views (mounted BEFORE 404 handler)
 app.use('/api/custom-views', require('./routes/customViews'));
