@@ -25,6 +25,14 @@ const aiSuggestController = require('../controllers/aiSuggestController');
 const smartSuggestionsController = require('../controllers/smartSuggestionsController');
 
 // Auth routes
+const requireAuthConfiguration = (req, res, next) => {
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32 ||
+      !/^[A-Za-z0-9][A-Za-z0-9._:-]+$/.test(process.env.GOVERNANCE_TENANT_ID || '')) {
+    return res.status(503).json({ error: 'Authentication is not configured' });
+  }
+  next();
+};
+router.use('/auth', requireAuthConfiguration);
 router.post('/auth/register', authLimiter, authController.register);
 router.post('/auth/login', authLimiter, authController.login);
 router.post('/auth/logout', authenticateToken, authController.logout);

@@ -11,6 +11,7 @@ const register = async (req, res) => {
     if (!email || !password || !name) {
       return res.status(400).json({ error: 'Email, password, and name are required' });
     }
+    if (password.length < 12) return res.status(400).json({ error: 'Password must be at least 12 characters' });
 
     const existingUser = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
     if (existingUser.rows.length > 0) {
@@ -31,7 +32,6 @@ const register = async (req, res) => {
       'INSERT INTO email_verifications (user_id, token, expires_at) VALUES ($1, $2, $3)',
       [user.id, verificationToken, new Date(Date.now() + 24 * 60 * 60 * 1000)]
     );
-    console.log(`[Email Verification] Token for ${email}: ${verificationToken}`);
     // Fire-and-forget email send (non-blocking)
     sendVerificationEmail(email, verificationToken).catch(err =>
       console.error('[EmailService] Failed to send verification email:', err.message)
@@ -111,7 +111,6 @@ const forgotPassword = async (req, res) => {
       [user.rows[0].id, resetToken, new Date(Date.now() + 60 * 60 * 1000)]
     );
 
-    console.log(`[Password Reset] Token for ${email}: ${resetToken}`);
     // Fire-and-forget email send (non-blocking)
     sendPasswordResetEmail(email, resetToken).catch(err =>
       console.error('[EmailService] Failed to send password reset email:', err.message)
@@ -130,8 +129,8 @@ const resetPassword = async (req, res) => {
       return res.status(400).json({ error: 'Token and new password are required' });
     }
 
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    if (password.length < 12) {
+      return res.status(400).json({ error: 'Password must be at least 12 characters' });
     }
 
     const result = await pool.query(
@@ -163,8 +162,8 @@ const changePassword = async (req, res) => {
       return res.status(400).json({ error: 'Current and new passwords are required' });
     }
 
-    if (newPassword.length < 6) {
-      return res.status(400).json({ error: 'New password must be at least 6 characters' });
+    if (newPassword.length < 12) {
+      return res.status(400).json({ error: 'New password must be at least 12 characters' });
     }
 
     const user = await pool.query('SELECT password FROM users WHERE id = $1', [req.user.id]);
@@ -225,7 +224,6 @@ const resendVerification = async (req, res) => {
     );
 
     const userEmail = userResult.rows[0]?.email;
-    console.log(`[Email Verification] Resent token for ${userEmail}: ${verificationToken}`);
     // Fire-and-forget email send (non-blocking)
     if (userEmail) {
       sendVerificationEmail(userEmail, verificationToken).catch(err =>

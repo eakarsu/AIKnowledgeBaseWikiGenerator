@@ -2,6 +2,12 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../../../.env') });
+if (process.env.ALLOW_DEMO_SEED !== 'true' || process.env.NODE_ENV === 'production') {
+  throw new Error('Demo seed is quarantined; set ALLOW_DEMO_SEED=true outside production to run explicitly');
+}
+if (!process.env.DEMO_SEED_PASSWORD || process.env.DEMO_SEED_PASSWORD.length < 12) {
+  throw new Error('DEMO_SEED_PASSWORD must be explicitly supplied with at least 12 characters');
+}
 const { pool, initializeDatabase } = require('../config/database');
 
 const seed = async () => {
@@ -20,7 +26,7 @@ const seed = async () => {
     `);
 
     // Seed Users (15+)
-    const hashedPassword = await bcrypt.hash('password123', 10);
+    const hashedPassword = await bcrypt.hash(process.env.DEMO_SEED_PASSWORD, 10);
     const users = [];
     const userNames = [
       { name: 'John Admin', email: 'admin@knowledgebase.com', role: 'admin' },
@@ -613,9 +619,7 @@ const seed = async () => {
     console.log('\n========================================');
     console.log('Database seeding completed successfully!');
     console.log('========================================\n');
-    console.log('Demo Credentials:');
-    console.log('  Admin: admin@knowledgebase.com / password123');
-    console.log('  Demo: demo@example.com / password123');
+    console.log('Demo accounts were created with the caller-supplied password.');
     console.log('\nAI Features Seeded:');
     console.log('  - 15 Article Suggestions');
     console.log('  - 15 API Documentations');

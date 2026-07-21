@@ -25,16 +25,6 @@ const Login = () => {
     setLoading(false);
   };
 
-  const fillDemoCredentials = () => {
-    setEmail('demo@example.com');
-    setPassword('password123');
-  };
-
-  const fillAdminCredentials = () => {
-    setEmail('admin@knowledgebase.com');
-    setPassword('password123');
-  };
-
   return (
     <div className="login-page">
       <div className="login-card">
@@ -76,17 +66,6 @@ const Login = () => {
         </form>
 
         <div className="login-footer">
-          <p style={{ marginBottom: '1rem', fontSize: '0.875rem', color: '#6B7280' }}>
-            Quick Login Options
-          </p>
-          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginBottom: '1rem' }}>
-            <button type="button" className="demo-btn" onClick={fillDemoCredentials}>
-              Demo User
-            </button>
-            <button type="button" className="demo-btn" onClick={fillAdminCredentials}>
-              Admin User
-            </button>
-          </div>
           <p style={{ fontSize: '0.875rem', color: '#6B7280', marginBottom: '0.75rem' }}>
             <Link to="/forgot-password" style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 500 }}>
               Forgot Password?

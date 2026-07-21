@@ -38,6 +38,7 @@ app.use('/api/article-ownership-drift', require('./routes/article-ownership-drif
 
 // Custom Views (mounted BEFORE 404 handler)
 app.use('/api/custom-views', require('./routes/customViews'));
+app.use('/api/governed-knowledge-publishing', require('./governance'));
 
 // Health check
 app.get('/health', (req, res) => {
@@ -58,7 +59,7 @@ app.use((req, res) => {
 // Start server
 const startServer = async () => {
   try {
-    await initializeDatabase();
+    if (process.env.AUTO_INIT_SCHEMA === 'true') await initializeDatabase();
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
       console.log(`API available at http://localhost:${PORT}/api`);
@@ -71,22 +72,13 @@ const startServer = async () => {
 
 startServer();
 
-// === BATCH 05 AUTO-MOUNT (custom feature suggestions) ===
+// Generated prototype routes are opt-in for isolated, non-production evaluation.
+if (process.env.ENABLE_GENERATED_ROUTES === 'true' && process.env.NODE_ENV !== 'production') {
 app.use('/api/rag-qa', require('./routes/rag-qa'));
 app.use('/api/kb-health-monitor', require('./routes/kb-health-monitor'));
 app.use('/api/multi-language-kb', require('./routes/multi-language-kb'));
 app.use('/api/slack-bot', require('./routes/slack-bot'));
 app.use('/api/docs-widget', require('./routes/docs-widget'));
 
-// === Batch 05 Gaps & Frontend Mounts ===
-try { const _gap_ai_answer_question = require('./routes/gap-ai-answer-question'); app.use('/api/gap-ai-answer-question', _gap_ai_answer_question); } catch(e) { console.error('gap mount fail ai-answer-question:', e.message); }
-try { const _gap_ai_related_article_clustering = require('./routes/gap-ai-related-article-clustering'); app.use('/api/gap-ai-related-article-clustering', _gap_ai_related_article_clustering); } catch(e) { console.error('gap mount fail ai-related-article-clustering:', e.message); }
-try { const _gap_ai_auto_toc_generator = require('./routes/gap-ai-auto-toc-generator'); app.use('/api/gap-ai-auto-toc-generator', _gap_ai_auto_toc_generator); } catch(e) { console.error('gap mount fail ai-auto-toc-generator:', e.message); }
-try { const _gap_ai_broken_link_detection = require('./routes/gap-ai-broken-link-detection'); app.use('/api/gap-ai-broken-link-detection', _gap_ai_broken_link_detection); } catch(e) { console.error('gap mount fail ai-broken-link-detection:', e.message); }
-try { const _gap_approval = require('./routes/gap-approval'); app.use('/api/gap-approval', _gap_approval); } catch(e) { console.error('gap mount fail approval:', e.message); }
-try { const _gap_audience = require('./routes/gap-audience'); app.use('/api/gap-audience', _gap_audience); } catch(e) { console.error('gap mount fail audience:', e.message); }
-try { const _gap_webhooks = require('./routes/gap-webhooks'); app.use('/api/gap-webhooks', _gap_webhooks); } catch(e) { console.error('gap mount fail webhooks:', e.message); }
-try { const _gap_public = require('./routes/gap-public'); app.use('/api/gap-public', _gap_public); } catch(e) { console.error('gap mount fail public:', e.message); }
-try { const _gap_e_signature = require('./routes/gap-e-signature'); app.use('/api/gap-e-signature', _gap_e_signature); } catch(e) { console.error('gap mount fail e-signature:', e.message); }
-try { const _gap_mobile = require('./routes/gap-mobile'); app.use('/api/gap-mobile', _gap_mobile); } catch(e) { console.error('gap mount fail mobile:', e.message); }
-// === End Batch 05 Mounts ===
+}
+// Generated gap routes remain deliberately unmounted.

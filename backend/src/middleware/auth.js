@@ -2,9 +2,10 @@ const jwt = require('jsonwebtoken');
 const { pool } = require('../config/database');
 require('dotenv').config({ path: '../.env' });
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const authenticateToken = async (req, res, next) => {
+  if (!JWT_SECRET || JWT_SECRET.length < 32) return res.status(503).json({ error: 'Authentication is not configured' });
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
@@ -21,7 +22,7 @@ const authenticateToken = async (req, res, next) => {
       return res.status(403).json({ error: 'Token has been revoked' });
     }
   } catch (err) {
-    // If table doesn't exist yet, skip check
+    return res.status(503).json({ error: 'Token revocation state is unavailable' });
   }
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
@@ -35,6 +36,7 @@ const authenticateToken = async (req, res, next) => {
 };
 
 const optionalAuth = (req, res, next) => {
+  if (!JWT_SECRET || JWT_SECRET.length < 32) return next();
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
@@ -49,8 +51,9 @@ const optionalAuth = (req, res, next) => {
 };
 
 const generateToken = (user) => {
+  if (!JWT_SECRET || JWT_SECRET.length < 32) throw new Error('Authentication is not configured');
   return jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
+    { id: user.id, email: user.email, role: user.role, tenantId: process.env.GOVERNANCE_TENANT_ID },
     JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
   );
