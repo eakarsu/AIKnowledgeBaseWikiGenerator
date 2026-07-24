@@ -35,6 +35,7 @@ const requireAuthConfiguration = (req, res, next) => {
 router.use('/auth', requireAuthConfiguration);
 router.post('/auth/register', authLimiter, authController.register);
 router.post('/auth/login', authLimiter, authController.login);
+router.get('/auth/me', authenticateToken, authController.getProfile);
 router.post('/auth/logout', authenticateToken, authController.logout);
 router.post('/auth/forgot-password', authLimiter, authController.forgotPassword);
 router.post('/auth/reset-password', authLimiter, authController.resetPassword);

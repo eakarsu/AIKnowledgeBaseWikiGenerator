@@ -1,3 +1,4 @@
+const http = require('http');
 const https = require('https');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../../../.env') });
@@ -5,12 +6,13 @@ require('dotenv').config({ path: path.join(__dirname, '../../../.env') });
 class AIService {
   constructor() {
     this.apiKey = process.env.OPENROUTER_API_KEY;
-    this.baseUrl = process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1';
+    this.baseUrl = (process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1').replace(/\/$/, '');
     this.model = process.env.OPENROUTER_MODEL || 'anthropic/claude-3-5-sonnet-20241022';
   }
 
   async makeRequest(messages, model = null) {
     const useModel = model || this.model;
+    const endpoint = new URL(`${this.baseUrl}/chat/completions`);
     return new Promise((resolve, reject) => {
       const data = JSON.stringify({
         model: useModel,
@@ -20,9 +22,9 @@ class AIService {
       });
 
       const options = {
-        hostname: 'openrouter.ai',
-        port: 443,
-        path: '/api/v1/chat/completions',
+        hostname: endpoint.hostname,
+        port: endpoint.port || undefined,
+        path: `${endpoint.pathname}${endpoint.search}`,
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -32,7 +34,8 @@ class AIService {
         }
       };
 
-      const req = https.request(options, (res) => {
+      const transport = endpoint.protocol === 'http:' ? http : https;
+      const req = transport.request(options, (res) => {
         let body = '';
         res.on('data', (chunk) => body += chunk);
         res.on('end', () => {
@@ -62,6 +65,7 @@ class AIService {
   // Resolves with the full accumulated content when the stream ends.
   makeStreamingRequest(messages, sseRes, model = null) {
     const useModel = model || this.model;
+    const endpoint = new URL(`${this.baseUrl}/chat/completions`);
     return new Promise((resolve, reject) => {
       const data = JSON.stringify({
         model: useModel,
@@ -72,9 +76,9 @@ class AIService {
       });
 
       const options = {
-        hostname: 'openrouter.ai',
-        port: 443,
-        path: '/api/v1/chat/completions',
+        hostname: endpoint.hostname,
+        port: endpoint.port || undefined,
+        path: `${endpoint.pathname}${endpoint.search}`,
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -86,7 +90,8 @@ class AIService {
 
       let fullContent = '';
 
-      const req = https.request(options, (res) => {
+      const transport = endpoint.protocol === 'http:' ? http : https;
+      const req = transport.request(options, (res) => {
         let buffer = '';
 
         res.on('data', (chunk) => {

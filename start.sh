@@ -3,6 +3,11 @@ set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR"
+[[ -f .env ]] || { echo "Create .env from .env.example; defaults are not generated." >&2; exit 1; }
+set -a
+# shellcheck disable=SC1091
+source .env
+set +a
 API_DIR="backend"
 UI_DIR="frontend"
 MIGRATION="backend/src/migrations/001_governed_workflows.sql"
@@ -37,12 +42,16 @@ start_services() {
   [[ -d "$API_DIR/node_modules" && -d "$UI_DIR/node_modules" ]] ||
     { echo "Dependencies are absent; run reviewed locked installs separately." >&2; return 1; }
 
-  npm --prefix "$API_DIR" start &
+  [[ "$BACKEND_PORT" != "$FRONTEND_PORT" ]] || { echo "Backend and frontend ports must differ." >&2; return 1; }
+  for port in "$BACKEND_PORT" "$FRONTEND_PORT"; do if command -v lsof >/dev/null 2>&1 && lsof -tiTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1; then echo "Port $port is already in use." >&2; return 1; fi; done
+  if [[ "${MIGRATE_ON_START:-false}" == "true" ]]; then node backend/src/scripts/runtime-init.js; fi
+
+  PORT="$BACKEND_PORT" BACKEND_PORT="$BACKEND_PORT" npm --prefix "$API_DIR" start &
   api_pid=$!
   if node -e "const p=require('./$UI_DIR/package.json');process.exit(p.scripts&&p.scripts.dev?0:1)"; then
     npm --prefix "$UI_DIR" run dev &
   else
-    BROWSER=none npm --prefix "$UI_DIR" start &
+    BROWSER=none PORT="$FRONTEND_PORT" npm --prefix "$UI_DIR" start &
   fi
   ui_pid=$!
 
@@ -54,7 +63,7 @@ start_services() {
   wait "$api_pid" "$ui_pid"
 }
 
-case "${1:-check}" in
+case "${1:-start}" in
   check) check ;;
   migrate) migrate ;;
   start) start_services ;;
