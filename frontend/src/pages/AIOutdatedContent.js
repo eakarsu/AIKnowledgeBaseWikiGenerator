@@ -377,7 +377,12 @@ const AIOutdatedContent = () => {
                     <button
                       key={idx}
                       type="button"
-                      onClick={() => setFormData({ article_id: '', title: sample.title, content: sample.content, last_updated: sample.last_updated })}
+                      onClick={() => {
+                        const linkedArticle = articles.find((article) => String(article.id) === String(formData.article_id));
+                        setFormData(linkedArticle
+                          ? { ...formData, title: linkedArticle.title, content: linkedArticle.content, last_updated: linkedArticle.updated_at }
+                          : { ...formData, title: sample.title, content: sample.content, last_updated: sample.last_updated });
+                      }}
                       style={{
                         padding: '0.5rem 0.75rem',
                         borderRadius: '9999px',
@@ -408,6 +413,7 @@ const AIOutdatedContent = () => {
                     <option key={article.id} value={article.id}>{article.title}</option>
                   ))}
                 </select>
+                <p className="form-hint">Examples analyze pasted content. To link a result to an article, select an existing article; its reference and source content are kept when you use an example.</p>
               </div>
               <div className="form-group">
                 <label className="form-label">Title</label>

@@ -123,6 +123,7 @@ const SmartSuggestions = () => {
           <p style={{ color: '#4B5563', fontSize: '0.875rem', marginBottom: '1rem' }}>
             Select an article and click Auto-Generate. The AI will extract entities from the article content and find related articles to suggest.
           </p>
+          <div className="ai-preset-bar"><strong>Use an existing article</strong><div className="ai-actions">{articles.slice(0, 3).map((article) => <button type="button" className="btn btn-secondary" key={article.id} onClick={() => setSelectedArticleId(String(article.id))}>{article.title}</button>)}</div>{articles.length === 0 && <p>No articles are available. Create or select a real article before generating suggestions.</p>}</div>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
             <div style={{ flex: 1, minWidth: '200px' }}>
               <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.25rem' }}>

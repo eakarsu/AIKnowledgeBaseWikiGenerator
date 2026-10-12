@@ -451,9 +451,9 @@ const AIFaqGenerator = () => {
                 <label className="form-label">Sample Data</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                   {[
-                    { label: 'Getting Started', topic: 'Getting Started with Our Platform', question: 'How do I create my first project on the platform?', category: 'Getting Started', answer: '' },
-                    { label: 'API Security', topic: 'API Authentication & Security', question: 'How do I authenticate API requests and manage API keys?', category: 'API', answer: '' },
-                    { label: 'Billing & Plans', topic: 'Billing & Subscription Management', question: 'How do I upgrade my subscription plan and manage billing?', category: 'Billing', answer: '' }
+                    { label: 'Getting Started', topic: 'Getting Started with Our Platform', question: 'How do I create my first project on the platform?', category: 'Getting Started', answer: 'Open Projects, choose Create Project, enter a name and description, then invite collaborators from the project settings.' },
+                    { label: 'API Security', topic: 'API Authentication & Security', question: 'How do I authenticate API requests and manage API keys?', category: 'API', answer: 'Create a scoped API key in account settings and send it in the Authorization header. Rotate the key regularly and keep it out of client-side code.' },
+                    { label: 'Billing & Plans', topic: 'Billing & Subscription Management', question: 'How do I upgrade my subscription plan and manage billing?', category: 'Billing', answer: 'Open Billing in account settings, compare the available plans, and review the price and effective date before confirming a change.' }
                   ].map((sample, idx) => (
                     <button
                       key={idx}

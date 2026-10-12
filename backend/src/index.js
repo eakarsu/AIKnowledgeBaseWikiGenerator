@@ -46,6 +46,14 @@ app.get('/health', (req, res) => {
 });
 
 // Error handling middleware
+
+// Advisory AI reports only; native execution and approval routes stay unchanged.
+const aiWorkspaceSupport = require("../aiWorkspaceAdapters.cjs");
+const aiWorkspaceDatabase = require("./config/database.js").pool;
+app.use('/api/report-workspace', require("../aiWorkspace.cjs").createAIWorkspaceRouter({
+  pool: aiWorkspaceDatabase, authenticateToken: require("./middleware/auth.js").authenticateToken,
+  aiRateLimiter: aiWorkspaceSupport.createWorkspaceLimiter(), features: require("../aiWorkspaceFeatures.json"),
+}));
 app.use((err, req, res, next) => {
   console.error('Error:', err);
   res.status(500).json({ error: 'Internal server error' });

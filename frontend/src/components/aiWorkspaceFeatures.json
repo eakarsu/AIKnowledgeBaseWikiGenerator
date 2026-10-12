@@ -1,0 +1,282 @@
+[
+  {
+    "name": "GapAgentic",
+    "id": "gap-agentic",
+    "title": "Agentic",
+    "description": "Prepare a professional advisory report for agentic using the brief and evidence you provide. Review the findings, assumptions, and action plan before applying changes.",
+    "samples": [
+      {
+        "label": "Scenario",
+        "value": "Run Agentic for a realistic customer case.\nContext: a team needs a practical recommendation based on incomplete operating data.\nGoal: identify the best action, key risks, missing information, and expected business impact.\nReturn: summary, prioritized action plan, assumptions, and follow-up questions."
+      },
+      {
+        "label": "Data sample",
+        "value": "Analyze this Agentic data sample.\nInput records:\n- Record 1: urgent, customer impact high, owner unassigned\n- Record 2: medium priority, blocked by missing data\n- Record 3: recurring issue, automation opportunity\nReturn structured findings, anomalies, recommendations, and confidence."
+      },
+      {
+        "label": "Executive review",
+        "value": "Prepare an executive review for Agentic.\nAudience: business owner, operations lead, and implementation team.\nInclude impact, risk, estimated effort, decision points, and a concise next-step plan."
+      }
+    ]
+  },
+  {
+    "name": "GapAiAnswerQuestion",
+    "id": "gap-ai-answer-question",
+    "title": "Ai Answer Question",
+    "description": "Prepare a professional advisory report for ai answer question using the brief and evidence you provide. Review the findings, assumptions, and action plan before applying changes.",
+    "samples": [
+      {
+        "label": "Scenario",
+        "value": "Run Ai Answer Question for a realistic customer case.\nContext: a team needs a practical recommendation based on incomplete operating data.\nGoal: identify the best action, key risks, missing information, and expected business impact.\nReturn: summary, prioritized action plan, assumptions, and follow-up questions."
+      },
+      {
+        "label": "Data sample",
+        "value": "Analyze this Ai Answer Question data sample.\nInput records:\n- Record 1: urgent, customer impact high, owner unassigned\n- Record 2: medium priority, blocked by missing data\n- Record 3: recurring issue, automation opportunity\nReturn structured findings, anomalies, recommendations, and confidence."
+      },
+      {
+        "label": "Executive review",
+        "value": "Prepare an executive review for Ai Answer Question.\nAudience: business owner, operations lead, and implementation team.\nInclude impact, risk, estimated effort, decision points, and a concise next-step plan."
+      }
+    ]
+  },
+  {
+    "name": "GapAiAutoTocGenerator",
+    "id": "gap-ai-auto-toc-generator",
+    "title": "Ai Auto Toc Generator",
+    "description": "Prepare a professional advisory report for ai auto toc generator using the brief and evidence you provide. Review the findings, assumptions, and action plan before applying changes.",
+    "samples": [
+      {
+        "label": "Scenario",
+        "value": "Run Ai Auto Toc Generator for a realistic customer case.\nContext: a team needs a practical recommendation based on incomplete operating data.\nGoal: identify the best action, key risks, missing information, and expected business impact.\nReturn: summary, prioritized action plan, assumptions, and follow-up questions."
+      },
+      {
+        "label": "Data sample",
+        "value": "Analyze this Ai Auto Toc Generator data sample.\nInput records:\n- Record 1: urgent, customer impact high, owner unassigned\n- Record 2: medium priority, blocked by missing data\n- Record 3: recurring issue, automation opportunity\nReturn structured findings, anomalies, recommendations, and confidence."
+      },
+      {
+        "label": "Executive review",
+        "value": "Prepare an executive review for Ai Auto Toc Generator.\nAudience: business owner, operations lead, and implementation team.\nInclude impact, risk, estimated effort, decision points, and a concise next-step plan."
+      }
+    ]
+  },
+  {
+    "name": "GapAiBrokenLinkDetection",
+    "id": "gap-ai-broken-link-detection",
+    "title": "Ai Broken Link Detection",
+    "description": "Prepare a professional advisory report for ai broken link detection using the brief and evidence you provide. Review the findings, assumptions, and action plan before applying changes.",
+    "samples": [
+      {
+        "label": "Scenario",
+        "value": "Run Ai Broken Link Detection for a realistic customer case.\nContext: a team needs a practical recommendation based on incomplete operating data.\nGoal: identify the best action, key risks, missing information, and expected business impact.\nReturn: summary, prioritized action plan, assumptions, and follow-up questions."
+      },
+      {
+        "label": "Data sample",
+        "value": "Analyze this Ai Broken Link Detection data sample.\nInput records:\n- Record 1: urgent, customer impact high, owner unassigned\n- Record 2: medium priority, blocked by missing data\n- Record 3: recurring issue, automation opportunity\nReturn structured findings, anomalies, recommendations, and confidence."
+      },
+      {
+        "label": "Executive review",
+        "value": "Prepare an executive review for Ai Broken Link Detection.\nAudience: business owner, operations lead, and implementation team.\nInclude impact, risk, estimated effort, decision points, and a concise next-step plan."
+      }
+    ]
+  },
+  {
+    "name": "GapAiRelatedArticleClustering",
+    "id": "gap-ai-related-article-clustering",
+    "title": "Ai Related Article Clustering",
+    "description": "Prepare a professional advisory report for ai related article clustering using the brief and evidence you provide. Review the findings, assumptions, and action plan before applying changes.",
+    "samples": [
+      {
+        "label": "Scenario",
+        "value": "Run Ai Related Article Clustering for a realistic customer case.\nContext: a team needs a practical recommendation based on incomplete operating data.\nGoal: identify the best action, key risks, missing information, and expected business impact.\nReturn: summary, prioritized action plan, assumptions, and follow-up questions."
+      },
+      {
+        "label": "Data sample",
+        "value": "Analyze this Ai Related Article Clustering data sample.\nInput records:\n- Record 1: urgent, customer impact high, owner unassigned\n- Record 2: medium priority, blocked by missing data\n- Record 3: recurring issue, automation opportunity\nReturn structured findings, anomalies, recommendations, and confidence."
+      },
+      {
+        "label": "Executive review",
+        "value": "Prepare an executive review for Ai Related Article Clustering.\nAudience: business owner, operations lead, and implementation team.\nInclude impact, risk, estimated effort, decision points, and a concise next-step plan."
+      }
+    ]
+  },
+  {
+    "name": "GapApproval",
+    "id": "gap-approval",
+    "title": "Approval",
+    "description": "Prepare a professional advisory report for approval using the brief and evidence you provide. Review the findings, assumptions, and action plan before applying changes.",
+    "samples": [
+      {
+        "label": "Scenario",
+        "value": "Run Approval for a realistic customer case.\nContext: a team needs a practical recommendation based on incomplete operating data.\nGoal: identify the best action, key risks, missing information, and expected business impact.\nReturn: summary, prioritized action plan, assumptions, and follow-up questions."
+      },
+      {
+        "label": "Data sample",
+        "value": "Analyze this Approval data sample.\nInput records:\n- Record 1: urgent, customer impact high, owner unassigned\n- Record 2: medium priority, blocked by missing data\n- Record 3: recurring issue, automation opportunity\nReturn structured findings, anomalies, recommendations, and confidence."
+      },
+      {
+        "label": "Executive review",
+        "value": "Prepare an executive review for Approval.\nAudience: business owner, operations lead, and implementation team.\nInclude impact, risk, estimated effort, decision points, and a concise next-step plan."
+      }
+    ]
+  },
+  {
+    "name": "GapAudience",
+    "id": "gap-audience",
+    "title": "Audience",
+    "description": "Prepare a professional advisory report for audience using the brief and evidence you provide. Review the findings, assumptions, and action plan before applying changes.",
+    "samples": [
+      {
+        "label": "Scenario",
+        "value": "Run Audience for a realistic customer case.\nContext: a team needs a practical recommendation based on incomplete operating data.\nGoal: identify the best action, key risks, missing information, and expected business impact.\nReturn: summary, prioritized action plan, assumptions, and follow-up questions."
+      },
+      {
+        "label": "Data sample",
+        "value": "Analyze this Audience data sample.\nInput records:\n- Record 1: urgent, customer impact high, owner unassigned\n- Record 2: medium priority, blocked by missing data\n- Record 3: recurring issue, automation opportunity\nReturn structured findings, anomalies, recommendations, and confidence."
+      },
+      {
+        "label": "Executive review",
+        "value": "Prepare an executive review for Audience.\nAudience: business owner, operations lead, and implementation team.\nInclude impact, risk, estimated effort, decision points, and a concise next-step plan."
+      }
+    ]
+  },
+  {
+    "name": "GapESignature",
+    "id": "gap-e-signature",
+    "title": "E Signature",
+    "description": "Prepare a professional advisory report for e signature using the brief and evidence you provide. Review the findings, assumptions, and action plan before applying changes.",
+    "samples": [
+      {
+        "label": "Scenario",
+        "value": "Run E Signature for a realistic customer case.\nContext: a team needs a practical recommendation based on incomplete operating data.\nGoal: identify the best action, key risks, missing information, and expected business impact.\nReturn: summary, prioritized action plan, assumptions, and follow-up questions."
+      },
+      {
+        "label": "Data sample",
+        "value": "Analyze this E Signature data sample.\nInput records:\n- Record 1: urgent, customer impact high, owner unassigned\n- Record 2: medium priority, blocked by missing data\n- Record 3: recurring issue, automation opportunity\nReturn structured findings, anomalies, recommendations, and confidence."
+      },
+      {
+        "label": "Executive review",
+        "value": "Prepare an executive review for E Signature.\nAudience: business owner, operations lead, and implementation team.\nInclude impact, risk, estimated effort, decision points, and a concise next-step plan."
+      }
+    ]
+  },
+  {
+    "name": "GapMobile",
+    "id": "gap-mobile",
+    "title": "Mobile",
+    "description": "Prepare a professional advisory report for mobile using the brief and evidence you provide. Review the findings, assumptions, and action plan before applying changes.",
+    "samples": [
+      {
+        "label": "Scenario",
+        "value": "Run Mobile for a realistic customer case.\nContext: a team needs a practical recommendation based on incomplete operating data.\nGoal: identify the best action, key risks, missing information, and expected business impact.\nReturn: summary, prioritized action plan, assumptions, and follow-up questions."
+      },
+      {
+        "label": "Data sample",
+        "value": "Analyze this Mobile data sample.\nInput records:\n- Record 1: urgent, customer impact high, owner unassigned\n- Record 2: medium priority, blocked by missing data\n- Record 3: recurring issue, automation opportunity\nReturn structured findings, anomalies, recommendations, and confidence."
+      },
+      {
+        "label": "Executive review",
+        "value": "Prepare an executive review for Mobile.\nAudience: business owner, operations lead, and implementation team.\nInclude impact, risk, estimated effort, decision points, and a concise next-step plan."
+      }
+    ]
+  },
+  {
+    "name": "GapMultiLanguage",
+    "id": "gap-multi-language",
+    "title": "Multi Language",
+    "description": "Prepare a professional advisory report for multi language using the brief and evidence you provide. Review the findings, assumptions, and action plan before applying changes.",
+    "samples": [
+      {
+        "label": "Scenario",
+        "value": "Run Multi Language for a realistic customer case.\nContext: a team needs a practical recommendation based on incomplete operating data.\nGoal: identify the best action, key risks, missing information, and expected business impact.\nReturn: summary, prioritized action plan, assumptions, and follow-up questions."
+      },
+      {
+        "label": "Data sample",
+        "value": "Analyze this Multi Language data sample.\nInput records:\n- Record 1: urgent, customer impact high, owner unassigned\n- Record 2: medium priority, blocked by missing data\n- Record 3: recurring issue, automation opportunity\nReturn structured findings, anomalies, recommendations, and confidence."
+      },
+      {
+        "label": "Executive review",
+        "value": "Prepare an executive review for Multi Language.\nAudience: business owner, operations lead, and implementation team.\nInclude impact, risk, estimated effort, decision points, and a concise next-step plan."
+      }
+    ]
+  },
+  {
+    "name": "GapPublic",
+    "id": "gap-public",
+    "title": "Public",
+    "description": "Prepare a professional advisory report for public using the brief and evidence you provide. Review the findings, assumptions, and action plan before applying changes.",
+    "samples": [
+      {
+        "label": "Scenario",
+        "value": "Run Public for a realistic customer case.\nContext: a team needs a practical recommendation based on incomplete operating data.\nGoal: identify the best action, key risks, missing information, and expected business impact.\nReturn: summary, prioritized action plan, assumptions, and follow-up questions."
+      },
+      {
+        "label": "Data sample",
+        "value": "Analyze this Public data sample.\nInput records:\n- Record 1: urgent, customer impact high, owner unassigned\n- Record 2: medium priority, blocked by missing data\n- Record 3: recurring issue, automation opportunity\nReturn structured findings, anomalies, recommendations, and confidence."
+      },
+      {
+        "label": "Executive review",
+        "value": "Prepare an executive review for Public.\nAudience: business owner, operations lead, and implementation team.\nInclude impact, risk, estimated effort, decision points, and a concise next-step plan."
+      }
+    ]
+  },
+  {
+    "name": "GapRagPowered",
+    "id": "gap-rag-powered",
+    "title": "Rag Powered",
+    "description": "Prepare a professional advisory report for rag powered using the brief and evidence you provide. Review the findings, assumptions, and action plan before applying changes.",
+    "samples": [
+      {
+        "label": "Scenario",
+        "value": "Run Rag Powered for a realistic customer case.\nContext: a team needs a practical recommendation based on incomplete operating data.\nGoal: identify the best action, key risks, missing information, and expected business impact.\nReturn: summary, prioritized action plan, assumptions, and follow-up questions."
+      },
+      {
+        "label": "Data sample",
+        "value": "Analyze this Rag Powered data sample.\nInput records:\n- Record 1: urgent, customer impact high, owner unassigned\n- Record 2: medium priority, blocked by missing data\n- Record 3: recurring issue, automation opportunity\nReturn structured findings, anomalies, recommendations, and confidence."
+      },
+      {
+        "label": "Executive review",
+        "value": "Prepare an executive review for Rag Powered.\nAudience: business owner, operations lead, and implementation team.\nInclude impact, risk, estimated effort, decision points, and a concise next-step plan."
+      }
+    ]
+  },
+  {
+    "name": "GapSlackTeams",
+    "id": "gap-slack-teams",
+    "title": "Slack Teams",
+    "description": "Prepare a professional advisory report for slack teams using the brief and evidence you provide. Review the findings, assumptions, and action plan before applying changes.",
+    "samples": [
+      {
+        "label": "Scenario",
+        "value": "Run Slack Teams for a realistic customer case.\nContext: a team needs a practical recommendation based on incomplete operating data.\nGoal: identify the best action, key risks, missing information, and expected business impact.\nReturn: summary, prioritized action plan, assumptions, and follow-up questions."
+      },
+      {
+        "label": "Data sample",
+        "value": "Analyze this Slack Teams data sample.\nInput records:\n- Record 1: urgent, customer impact high, owner unassigned\n- Record 2: medium priority, blocked by missing data\n- Record 3: recurring issue, automation opportunity\nReturn structured findings, anomalies, recommendations, and confidence."
+      },
+      {
+        "label": "Executive review",
+        "value": "Prepare an executive review for Slack Teams.\nAudience: business owner, operations lead, and implementation team.\nInclude impact, risk, estimated effort, decision points, and a concise next-step plan."
+      }
+    ]
+  },
+  {
+    "name": "GapWebhooks",
+    "id": "gap-webhooks",
+    "title": "Webhooks",
+    "description": "Prepare a professional advisory report for webhooks using the brief and evidence you provide. Review the findings, assumptions, and action plan before applying changes.",
+    "samples": [
+      {
+        "label": "Scenario",
+        "value": "Run Webhooks for a realistic customer case.\nContext: a team needs a practical recommendation based on incomplete operating data.\nGoal: identify the best action, key risks, missing information, and expected business impact.\nReturn: summary, prioritized action plan, assumptions, and follow-up questions."
+      },
+      {
+        "label": "Data sample",
+        "value": "Analyze this Webhooks data sample.\nInput records:\n- Record 1: urgent, customer impact high, owner unassigned\n- Record 2: medium priority, blocked by missing data\n- Record 3: recurring issue, automation opportunity\nReturn structured findings, anomalies, recommendations, and confidence."
+      },
+      {
+        "label": "Executive review",
+        "value": "Prepare an executive review for Webhooks.\nAudience: business owner, operations lead, and implementation team.\nInclude impact, risk, estimated effort, decision points, and a concise next-step plan."
+      }
+    ]
+  }
+]

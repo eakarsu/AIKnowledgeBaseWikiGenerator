@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
 import api from '../services/api';
+import AIReport, { StructuredValue } from '../components/AIReport';
 
 const AITools = () => {
   const [activeTool, setActiveTool] = useState(null);
   const [input, setInput] = useState('');
   const [result, setResult] = useState('');
+  const [answerContext, setAnswerContext] = useState('');
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
@@ -174,24 +175,33 @@ const AITools = () => {
   const [targetLanguage, setTargetLanguage] = useState('Spanish');
   const [contentType, setContentType] = useState('article');
 
+  const presetExamples = [
+    { label: 'Authentication guide', topic: 'Write a practical guide to API authentication for new developers, including setup, token rotation, common errors, and a short checklist.', content: 'Our API accepts bearer tokens in the Authorization header. Keys are scoped to a workspace and can be rotated in Settings. A 401 response means credentials are missing or invalid; a 403 response means the key lacks permission. Never place a secret key in browser code.', question: 'How should a new developer authenticate an API request and troubleshoot a 401 response?', language: 'Spanish', type: 'documentation' },
+    { label: 'Release notes', topic: 'Draft release notes for a knowledge base update covering search filters, article ownership, and accessibility fixes.', content: 'The October release adds category and owner filters to search. Editors can now see an article ownership badge. Keyboard focus is visible in the article menu. Teams should review old saved searches because filter defaults may have changed.', question: 'What should editors check after the October knowledge base release?', language: 'French', type: 'article' },
+    { label: 'Onboarding tutorial', topic: 'Create an onboarding tutorial for editors covering a first draft, review request, and publication.', content: 'To publish an article, create a draft, add a title and category, then request review from a teammate. Reviewers leave comments and approve the final text. After approval, an editor publishes the article and checks it in search.', question: 'What are the steps for drafting and publishing a reviewed article?', language: 'German', type: 'tutorial' }
+  ];
+  const applyPreset = (example) => {
+    setInput(activeTool.id === 'generate' ? example.topic : ['qa', 'chat'].includes(activeTool.id) ? example.question : example.content);
+    setAnswerContext(example.content);
+    setTargetLanguage(example.language);
+    setContentType(example.type);
+  };
+
   const handleToolSelect = (tool) => {
     setActiveTool(tool);
     setResult('');
     setInput('');
+    setAnswerContext('');
   };
 
-  const handleSuggestionClick = (suggestion) => {
-    if (activeTool?.exampleContent && suggestion.includes('...')) {
-      setInput(activeTool.exampleContent);
-    } else {
-      setInput(suggestion);
-    }
+  const handleSuggestionClick = (suggestion, index) => {
+    applyPreset(presetExamples[index % presetExamples.length]);
+    if (activeTool.id === 'generate') setInput(suggestion);
   };
 
   const handleUseExample = () => {
-    if (activeTool?.exampleContent) {
-      setInput(activeTool.exampleContent);
-    }
+    applyPreset(presetExamples[0]);
+    if (activeTool?.exampleContent) setInput(activeTool.exampleContent);
   };
 
   const handleSubmit = async () => {
@@ -234,7 +244,7 @@ const AITools = () => {
           responseKey = 'suggestions';
           break;
         case 'qa':
-          payload = { question: input, context: '' };
+          payload = { question: input, context: answerContext };
           responseKey = 'answer';
           break;
         case 'chat':
@@ -248,15 +258,7 @@ const AITools = () => {
       const response = await api.post(activeTool.endpoint, payload);
       const data = response.data[responseKey];
 
-      if (Array.isArray(data)) {
-        if (activeTool.id === 'suggestions') {
-          setResult(data.map(s => `• ${s.suggestion || s}`).join('\n'));
-        } else {
-          setResult(data.join('\n'));
-        }
-      } else {
-        setResult(data);
-      }
+      setResult(data);
     } catch (error) {
       setResult('Error: ' + (error.response?.data?.error || 'Failed to process request. Make sure your OpenRouter API key is configured.'));
     fetchHistory();
@@ -328,6 +330,7 @@ const AITools = () => {
               </div>
 
               {/* Quick Suggestions */}
+              <div className="ai-preset-bar"><strong>Complete examples</strong><div className="ai-actions">{presetExamples.map((example) => <button key={example.label} type="button" className="btn btn-secondary" onClick={() => applyPreset(example)}>{example.label}</button>)}</div></div>
               <div style={{ marginBottom: '1.5rem' }}>
                 <label className="form-label">Quick Suggestions</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -335,7 +338,7 @@ const AITools = () => {
                     <button
                       key={index}
                       type="button"
-                      onClick={() => handleSuggestionClick(suggestion)}
+                      onClick={() => handleSuggestionClick(suggestion, index)}
                       style={{
                         padding: '0.5rem 0.75rem',
                         borderRadius: '9999px',
@@ -414,6 +417,7 @@ const AITools = () => {
               )}
 
               {/* Input Area */}
+              {activeTool.id === 'qa' && <div className="form-group"><label className="form-label" htmlFor="answer-context">Context (optional)</label><textarea id="answer-context" className="form-input form-textarea" value={answerContext} onChange={(event) => setAnswerContext(event.target.value)} rows="4" /></div>}
               <div className="form-group">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                   <label className="form-label" style={{ margin: 0 }}>{activeTool.inputLabel}</label>
@@ -450,29 +454,7 @@ const AITools = () => {
                 )}
               </button>
 
-              {result && (
-                <div className="ai-result" style={{ marginTop: '1.5rem' }}>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '1rem'
-                  }}>
-                    <h4 style={{ color: '#374151', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span>✅</span> Result
-                    </h4>
-                    <button
-                      className="btn btn-sm btn-secondary"
-                      onClick={() => navigator.clipboard.writeText(result)}
-                    >
-                      📋 Copy
-                    </button>
-                  </div>
-                  <div className="article-body" style={{ background: 'white', padding: '1rem', borderRadius: '0.5rem' }}>
-                    <ReactMarkdown>{result}</ReactMarkdown>
-                  </div>
-                </div>
-              )}
+              {result !== '' && <AIReport response={result} title={`${activeTool.name} result`} />}
             </div>
           </div>
         </div>
@@ -521,9 +503,7 @@ const AITools = () => {
                       </div>
                       <div>
                         <strong style={{ fontSize: '0.8125rem', color: '#6B7280' }}>Result:</strong>
-                        <p style={{ fontSize: '0.875rem', color: '#374151', margin: '0.25rem 0' }}>
-                          {item.result?.substring(0, 200)}{item.result?.length > 200 ? '...' : ''}
-                        </p>
+                        <StructuredValue value={item.result} />
                       </div>
                       <button
                         className="btn btn-sm btn-secondary"

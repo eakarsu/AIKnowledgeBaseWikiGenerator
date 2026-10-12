@@ -498,6 +498,7 @@ const ArticleDetail = () => {
               padding: '1rem',
               marginBottom: '1.5rem'
             }}>
+              <div className="ai-preset-bar"><strong>Translation examples</strong><p>Use this article's existing content and record.</p><div className="ai-actions">{['Spanish', 'French', 'German'].map((language) => <button key={language} type="button" className="btn btn-secondary" onClick={() => setTranslateLanguage(language)}>{language}</button>)}</div></div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                 <span style={{ fontWeight: 500 }}>🤖 AI Translate to:</span>
                 <select

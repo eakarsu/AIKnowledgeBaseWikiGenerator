@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../services/api';
+import { StructuredValue } from '../components/AIReport';
 
 const AIApiDocumentation = () => {
   const navigate = useNavigate();
@@ -194,17 +195,7 @@ const AIApiDocumentation = () => {
             <div style={{ fontWeight: 600, color: '#92400E', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <span>📤</span> Request Body
             </div>
-            <pre style={{
-              background: '#1F2937',
-              color: '#10B981',
-              padding: '1rem',
-              borderRadius: '0.5rem',
-              overflow: 'auto',
-              fontSize: '0.8125rem',
-              fontFamily: 'monospace'
-            }}>
-              {JSON.stringify(requestBody, null, 2)}
-            </pre>
+            <StructuredValue value={requestBody} />
           </div>
         )}
 
@@ -214,17 +205,7 @@ const AIApiDocumentation = () => {
             <div style={{ fontWeight: 600, color: '#5B21B6', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <span>📥</span> Response Body
             </div>
-            <pre style={{
-              background: '#1F2937',
-              color: '#A78BFA',
-              padding: '1rem',
-              borderRadius: '0.5rem',
-              overflow: 'auto',
-              fontSize: '0.8125rem',
-              fontFamily: 'monospace'
-            }}>
-              {JSON.stringify(responseBody, null, 2)}
-            </pre>
+            <StructuredValue value={responseBody} />
           </div>
         )}
 
