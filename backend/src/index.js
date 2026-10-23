@@ -9,6 +9,7 @@ const { initializeDatabase } = require('./config/database');
 const { apiLimiter, aiLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
+app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 const PORT = process.env.PORT || 5000;
 
 // Middleware
@@ -39,6 +40,11 @@ app.use('/api/article-ownership-drift', require('./routes/article-ownership-drif
 // Custom Views (mounted BEFORE 404 handler)
 app.use('/api/custom-views', require('./routes/customViews'));
 app.use('/api/governed-knowledge-publishing', require('./governance'));
+{ const fp = require('./services/featurePack'); const { pool: kbPool } = require('./config/database');
+  app.use('/api/feature-pack', require('./routes/featurePack').createFeaturePackRouter({
+    authenticate: require('./middleware/auth').authenticateToken,
+    getRecords: async () => (await kbPool.query('SELECT * FROM articles ORDER BY id DESC LIMIT 1000')).rows,
+    aiHandlers: { 'article-summary': fp.articleSummary, 'tag-suggestions': fp.tagSuggestions, 'related-articles': fp.relatedArticles } })); }
 
 // Health check
 app.get('/health', (req, res) => {
